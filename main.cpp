@@ -121,52 +121,45 @@ private:
     sf::Text difficultyText;
     sf::Text boostText;
 
-    void loadBikeAnimation() {
-        if (!bikeSheet.loadFromFile("assets/bike_sheet.png")) {
-            std::cerr << "Error loading bike sprite sheet - creating placeholder\n";
-            // Create a placeholder bike sprite sheet
-            sf::Image placeholder;
-            placeholder.create(160, 70, sf::Color::Transparent); // 4 frames × 40px wide
-            
-            // Simple bike drawing (red bike with black wheels)
-            for (int i = 0; i < 4; i++) {
-                // Frame positions
-                int frameX = i * 40;
-                
-                // Bike body (rectangle)
-                for (int y = 20; y < 50; y++) {
-                    for (int x = frameX + 10; x < frameX + 30; x++) {
-                        placeholder.setPixel(x, y, sf::Color::Red);
-                    }
-                }
-                
-                // Wheels (circles)
-                for (int y = 0; y < 70; y++) {
-                    for (int x = 0; x < 40; x++) {
-                        // Front wheel (frameX + 25)
-                        if (sqrt(pow(x - (frameX + 25), 2) + pow(y - 60, 2)) < 8) {
-                            placeholder.setPixel(x, y, sf::Color::Black);
-                        }
-                        // Rear wheel (frameX + 15)
-                        if (sqrt(pow(x - (frameX + 15), 2) + pow(y - 60, 2)) < 8) {
-                            placeholder.setPixel(x, y, sf::Color::Black);
-                        }
+// In your loadBikeAnimation() function:
+void loadBikeAnimation() {
+    if (!bikeSheet.loadFromFile("assets/bike_sheet.png")) {
+        // Create emergency fallback (red bike)
+        sf::Image placeholder;
+        placeholder.create(160, 70, sf::Color::Transparent);
+        
+        // Draw simple bike frames
+        for (int i = 0; i < 4; i++) {
+            int frameX = i * 40;
+            // Bike body (red rectangle)
+            for (int y = 20; y < 50; y++) 
+                for (int x = frameX + 10; x < frameX + 30; x++) 
+                    placeholder.setPixel(x, y, sf::Color::Red);
+            // Wheels (black circles)
+            for (int y = 0; y < 70; y++) {
+                for (int x = 0; x < 40; x++) {
+                    if (sqrt(pow(x-(frameX+25),2) + pow(y-60,2)) < 8 || 
+                        sqrt(pow(x-(frameX+15),2) + pow(y-60,2)) < 8) {
+                        placeholder.setPixel(x, y, sf::Color::Black);
                     }
                 }
             }
-            bikeSheet.loadFromImage(placeholder);
         }
-        
-        bikeSheet.setSmooth(false);
-        frameRects.clear();
-        for (int i = 0; i < 4; ++i) {
-            frameRects.push_back(sf::IntRect(i * 40, 0, 40, 70)); // Adjusted for new size
-        }
-        
-        bike.setTexture(bikeSheet);
-        bike.setTextureRect(frameRects[0]);
-        bike.setOrigin(bikeWidth/2, bikeHeight/2);
+        bikeSheet.loadFromImage(placeholder);
     }
+    
+    bikeSheet.setSmooth(false); // Critical for pixel art
+    
+    // Define animation frames (40x70 each)
+    frameRects.clear();
+    for (int i = 0; i < 4; i++) {
+        frameRects.push_back(sf::IntRect(i * 40, 0, 40, 70));
+    }
+    
+    bike.setTexture(bikeSheet);
+    bike.setTextureRect(frameRects[0]);
+    bike.setOrigin(20, 35); // Center origin (40x70/2)
+}
 
     void initRoad() {
         if (!roadTexture.loadFromFile("assets/road_texture.png")) {
@@ -279,7 +272,7 @@ public:
         }
         
         // Load obstacle textures with fallbacks
-        if (!carTexture.loadFromFile("assets/car.png")) {
+        if (!carTexture.loadFromFile("assets/car.jpg")) {
             std::cerr << "Error loading car texture - using placeholder\n";
             carTexture.create(100, 60);
             sf::Image carImg;
@@ -315,22 +308,23 @@ public:
             constructionTexture.loadFromImage(conImg);
         }
         
-        if (!barrierTexture.loadFromFile("assets/barrier.png")) {
-            std::cerr << "Error loading barrier texture - using placeholder\n";
-            barrierTexture.create(120, 30);
-            sf::Image barImg;
-            barImg.create(120, 30, sf::Color::Transparent);
-            // Striped barrier
-            for (int y = 0; y < 30; y++) {
-                for (int x = 0; x < 120; x++) {
-                    if ((x + y) % 20 < 10) {
-                        barImg.setPixel(x, y, sf::Color::Red);
-                    } else {
-                        barImg.setPixel(x, y, sf::Color::White);
-                    }
+        if (!barrierTexture.loadFromFile("assets/car2.png")) {
+            std::cerr << "Error loading car2 texture - using placeholder\n";
+            barrierTexture.create(100, 60);
+            sf::Image carImg;
+            carImg.create(100, 60, sf::Color::Transparent);
+            // Simple car shape
+            for (int y = 20; y < 40; y++) {
+                for (int x = 10; x < 90; x++) {
+                    carImg.setPixel(x, y, sf::Color::Blue);
                 }
             }
-            barrierTexture.loadFromImage(barImg);
+            // Windows
+            for (int y = 25; y < 35; y++) {
+                for (int x = 20; x < 40; x++) carImg.setPixel(x, y, sf::Color::Cyan);
+                for (int x = 60; x < 80; x++) carImg.setPixel(x, y, sf::Color::Cyan);
+            }
+            carTexture.loadFromImage(carImg);
         }
 
         // Setup sprites
