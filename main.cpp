@@ -28,9 +28,6 @@ public:
     float getY() const {
         return sprite.getPosition().y;
     }
-    float getPosition() const {
-        return sprite.getPosition().x;
-    }
     void setPosition(float x, float y) { sprite.setPosition(x, y); }
     void setScale(float s) { scale = s; sprite.setScale(scale, scale); }
 };
@@ -40,7 +37,7 @@ public:
     CarObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(0.7f);
+        setScale(0.85f); // Increased from 0.7f
         speed = 3.0f;
     }
 };
@@ -50,7 +47,7 @@ public:
     ConstructionObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(0.8f); // Increased from 0.6f to 0.8f
+        setScale(1.0f); // Increased from 0.8f
         speed = 3.0f;
     }
 };
@@ -60,7 +57,7 @@ public:
     RoadBarrierObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(0.5f);
+        setScale(1.0f); // Doubled from 0.5f
         speed = 3.0f;
     }
 };
@@ -70,7 +67,7 @@ public:
     ParkedBikeObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(0.6f);
+        setScale(0.6f); // Doubled from 0.3f
         speed = 3.0f;
     }
 };
@@ -80,7 +77,7 @@ public:
     PuddleObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(0.8f);
+        setScale(0.9f); // Increased from 0.8f
         speed = 3.0f;
     }
 };
@@ -99,9 +96,9 @@ private:
     
     // Bike sprite
     sf::Sprite bike;
-    const float bikeWidth = 40.0f;
-    const float bikeHeight = 70.0f;
-    float bikeY = 450.0f;
+    const float bikeWidth = 48.0f;  // Increased from 40
+    const float bikeHeight = 84.0f; // Increased from 70
+    float bikeY = 440.0f;          // Adjusted position
     float bikeSpeed = 4.0f;
     bool isBoosting = false;
     float boostTimer = 0.0f;
@@ -148,28 +145,30 @@ private:
     sf::Text scoreText;
     sf::Text difficultyText;
     sf::Text boostText;
+    sf::RectangleShape playButtonBg;
+    sf::RectangleShape quitButtonBg;
 
     void loadBikeAnimation() {
         if (!bikeSheet.loadFromFile("assets/bike_sheet.png")) {
             std::cerr << "Error loading bike sprite sheet - creating placeholder\n";
             sf::Image placeholder;
-            placeholder.create(160, 70, sf::Color::Transparent);
+            placeholder.create(192, 84, sf::Color::Transparent); // 4 frames × 48x84
             
             // Draw 4-frame bike animation (red bike with black wheels)
             for (int i = 0; i < 4; i++) {
-                int frameX = i * 40;
+                int frameX = i * 48;
                 // Bike frame
-                for (int y = 20; y < 50; y++) {
-                    for (int x = frameX + 10; x < frameX + 30; x++) {
+                for (int y = 24; y < 60; y++) {
+                    for (int x = frameX + 12; x < frameX + 36; x++) {
                         placeholder.setPixel(x, y, sf::Color::Red);
                     }
                 }
                 // Wheels
-                for (int y = 0; y < 70; y++) {
-                    for (int x = 0; x < 40; x++) {
-                        float dist1 = std::hypot(x-(frameX+25), y-60);
-                        float dist2 = std::hypot(x-(frameX+15), y-60);
-                        if (dist1 < 8 || dist2 < 8) {
+                for (int y = 0; y < 84; y++) {
+                    for (int x = 0; x < 48; x++) {
+                        float dist1 = std::hypot(x-(frameX+30), y-72);
+                        float dist2 = std::hypot(x-(frameX+18), y-72);
+                        if (dist1 < 10 || dist2 < 10) {
                             placeholder.setPixel(x, y, sf::Color::Black);
                         }
                     }
@@ -181,7 +180,7 @@ private:
         bikeSheet.setSmooth(false);
         frameRects.clear();
         for (int i = 0; i < 4; ++i) {
-            frameRects.push_back(sf::IntRect(i * 40, 0, 40, 70));
+            frameRects.push_back(sf::IntRect(i * 48, 0, 48, 84));
         }
         
         bike.setTexture(bikeSheet);
@@ -215,8 +214,8 @@ private:
     }
 
     void resetGame() {
-        bike.setPosition(400, 450);
-        bikeY = 450.0f;
+        bike.setPosition(400, 440);
+        bikeY = 440.0f;
         bikeRotation = 0.0f;
         obstacles.clear();
         nextObstacleY = -100.0f;
@@ -238,7 +237,7 @@ private:
     void addRandomObstacle() {
         float obstacleX = 100 + rand() % 600;
         
-        int obstacleType = rand() % 5; // Now 5 types (0-4)
+        int obstacleType = rand() % 5; // 5 types (0-4)
         switch (obstacleType) {
             case 0: obstacles.push_back(std::make_unique<CarObstacle>(obstacleX, nextObstacleY, carTexture)); break;
             case 1: obstacles.push_back(std::make_unique<ConstructionObstacle>(obstacleX, nextObstacleY, constructionTexture)); break;
@@ -251,6 +250,40 @@ private:
 
     void increaseDifficulty() {
         roadSpeed = std::min(maxTrackSpeed, roadSpeed * 1.05f);
+    }
+
+    void setupMenu() {
+        // Button backgrounds
+        playButtonBg.setSize(sf::Vector2f(150, 60));
+        playButtonBg.setPosition(325, 245);
+        playButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
+        playButtonBg.setOutlineThickness(2);
+        playButtonBg.setOutlineColor(sf::Color::White);
+
+        quitButtonBg.setSize(sf::Vector2f(150, 60));
+        quitButtonBg.setPosition(325, 345);
+        quitButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
+        quitButtonBg.setOutlineThickness(2);
+        quitButtonBg.setOutlineColor(sf::Color::White);
+
+        // Menu text
+        playText.setString("PLAY");
+        playText.setFont(font);
+        playText.setCharacterSize(45);
+        playText.setPosition(350, 250);
+        playText.setFillColor(sf::Color::White);
+        playText.setOutlineColor(sf::Color::Black);
+        playText.setOutlineThickness(2);
+        playText.setStyle(sf::Text::Bold);
+
+        quitText.setString("QUIT");
+        quitText.setFont(font);
+        quitText.setCharacterSize(45);
+        quitText.setPosition(350, 350);
+        quitText.setFillColor(sf::Color::White);
+        quitText.setOutlineColor(sf::Color::Black);
+        quitText.setOutlineThickness(2);
+        quitText.setStyle(sf::Text::Bold);
     }
 
 public:
@@ -284,7 +317,7 @@ public:
         }
         
         // Obstacle textures
-        if (!carTexture.loadFromFile("assets/car.jpg")) {
+        if (!carTexture.loadFromFile("assets/car.png")) {
             sf::Image carImg;
             carImg.create(100, 60, sf::Color::Transparent);
             for (int y = 20; y < 40; y++) {
@@ -295,7 +328,7 @@ public:
         
         if (!constructionTexture.loadFromFile("assets/construction.png")) {
             sf::Image conImg;
-            conImg.create(100, 100, sf::Color::Transparent); // Larger construction
+            conImg.create(100, 100, sf::Color::Transparent);
             for (int y = 0; y < 100; y++) {
                 int width = 50 - y/2;
                 for (int x = 50 - width; x < 50 + width; x++) {
@@ -317,33 +350,27 @@ public:
             barrierTexture.loadFromImage(barImg);
         }
         
-        // New obstacle textures
         if (!parkedBikeTexture.loadFromFile("assets/parked_bike.png")) {
-            // Create placeholder matching 200x67 dimensions
-            sf::Image img;
-            img.create(200, 67, sf::Color::Transparent);
-            
-            // Draw detailed blue bike (proportional to 200x67)
-            for (int y = 30; y < 50; y++) {
-                for (int x = 50; x < 150; x++) {
-                    img.setPixel(x, y, sf::Color::Blue); // Bike frame
-                }
+            sf::Image bikeImg;
+            bikeImg.create(200, 67, sf::Color::Transparent);
+            // Frame
+            for (int y = 20; y < 50; y++) {
+                for (int x = 50; x < 150; x++) bikeImg.setPixel(x, y, sf::Color::Blue);
             }
-            // Wheels (larger to match new scale)
+            // Wheels
             for (int y = 0; y < 67; y++) {
                 for (int x = 0; x < 200; x++) {
                     if (std::hypot(x-60, y-60) < 15 || std::hypot(x-140, y-60) < 15) {
-                        img.setPixel(x, y, sf::Color::Black);
+                        bikeImg.setPixel(x, y, sf::Color::Black);
                     }
                 }
             }
-            parkedBikeTexture.loadFromImage(img);
+            parkedBikeTexture.loadFromImage(bikeImg);
         }
         
         if (!puddleTexture.loadFromFile("assets/puddle.png")) {
             sf::Image puddleImg;
             puddleImg.create(100, 30, sf::Color::Transparent);
-            // Draw blue oval puddle
             for (int y = 0; y < 30; y++) {
                 for (int x = 0; x < 100; x++) {
                     if (std::hypot(x-50, y-15) < 30) puddleImg.setPixel(x, y, sf::Color(0, 0, 255, 150));
@@ -368,21 +395,9 @@ public:
         if (!font.loadFromFile("assets/arial.ttf")) {
             font = sf::Font();
         }
-        
-        playText.setString("PLAY");
-        playText.setFont(font);
-        playText.setCharacterSize(40);
-        playText.setPosition(350, 250);
-        playText.setFillColor(sf::Color::Black);
-        playText.setStyle(sf::Text::Bold);
+        setupMenu();
 
-        quitText.setString("QUIT");
-        quitText.setFont(font);
-        quitText.setCharacterSize(40);
-        quitText.setPosition(350, 350);
-        quitText.setFillColor(sf::Color::Black);
-        quitText.setStyle(sf::Text::Bold);
-
+        // UI
         scoreText.setFont(font);
         scoreText.setCharacterSize(28);
         scoreText.setPosition(20, 20);
@@ -477,7 +492,7 @@ private:
             // Boost
             if (isBoosting) {
                 boostTimer -= deltaTime;
-                bikeY = 450 - 30 * sin(boostTimer * 10.0f);
+                bikeY = 440 - 30 * sin(boostTimer * 10.0f);
                 
                 if (static_cast<int>(boostTimer * 10) % 2 == 0) {
                     bike.setColor(sf::Color(255, 255, 200));
@@ -488,7 +503,7 @@ private:
                 if (boostTimer <= 0) {
                     isBoosting = false;
                     roadSpeed /= 1.7f;
-                    bikeY = 450;
+                    bikeY = 440;
                     bike.setColor(sf::Color::White);
                     boostText.setString("READY");
                     frameTime = 0.1f;
@@ -572,27 +587,37 @@ private:
         } else {
             // Menu
             window.draw(menuBackground);
+            window.draw(playButtonBg);
+            window.draw(quitButtonBg);
             
+            // Highlight buttons on hover
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
             if (playText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                playButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
                 playText.setFillColor(sf::Color(200, 255, 200));
             } else {
+                playButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
                 playText.setFillColor(sf::Color::White);
             }
             
             if (quitText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                quitButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
                 quitText.setFillColor(sf::Color(255, 200, 200));
             } else {
+                quitButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
                 quitText.setFillColor(sf::Color::White);
             }
             
             window.draw(playText);
             window.draw(quitText);
             
+            // Title
             sf::Text title("BIKE RACER", font, 60);
             title.setPosition(220, 100);
             title.setFillColor(sf::Color::White);
             title.setStyle(sf::Text::Bold);
+            title.setOutlineColor(sf::Color::Black);
+            title.setOutlineThickness(2);
             window.draw(title);
         }
 
