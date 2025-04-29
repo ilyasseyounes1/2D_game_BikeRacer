@@ -121,7 +121,7 @@ private:
     sf::Texture parkedBikeTexture;
     sf::Texture puddleTexture;
     float nextObstacleY = -100.0f;
-    const float obstacleSpacing = 250.0f;
+    const float obstacleSpacing = 170.0f;
 
     // Game state
     int score = 0;
@@ -249,7 +249,7 @@ private:
     }
 
     void increaseDifficulty() {
-        roadSpeed = std::min(maxTrackSpeed, roadSpeed * 1.05f);
+        roadSpeed = std::min(maxTrackSpeed, roadSpeed * 1.6f);
     }
 
     void setupMenu() {
@@ -317,7 +317,7 @@ public:
         }
         
         // Obstacle textures
-        if (!carTexture.loadFromFile("assets/car.png")) {
+        if (!carTexture.loadFromFile("assets/car.jpg")) {
             sf::Image carImg;
             carImg.create(100, 60, sf::Color::Transparent);
             for (int y = 20; y < 40; y++) {
