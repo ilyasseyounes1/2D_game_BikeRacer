@@ -6,30 +6,46 @@
 #include <cmath>
 #include <memory>
 
-enum GameState { MENU, PLAYING };
+enum GameState { MENU, PLAYING, PAUSED, ABOUT };
 
 class Obstacle {
 protected:
     sf::Sprite sprite;
     float speed;
     float scale = 1.0f;
+    sf::FloatRect collisionBox;
     
 public:
     virtual ~Obstacle() = default;
     virtual void update(float deltaTime) {
         sprite.move(0, speed * deltaTime * 60.0f);
+        collisionBox.left = sprite.getPosition().x - collisionBox.width/2;
+        collisionBox.top = sprite.getPosition().y - collisionBox.height/2;
     }
     virtual void draw(sf::RenderWindow& window) {
         window.draw(sprite);
     }
-    sf::FloatRect getBounds() const {
-        return sprite.getGlobalBounds();
+    sf::FloatRect getCollisionBox() const {
+        return collisionBox;
     }
     float getY() const {
         return sprite.getPosition().y;
     }
-    void setPosition(float x, float y) { sprite.setPosition(x, y); }
-    void setScale(float s) { scale = s; sprite.setScale(scale, scale); }
+    void setPosition(float x, float y) { 
+        sprite.setPosition(x, y); 
+        collisionBox.left = x - collisionBox.width/2;
+        collisionBox.top = y - collisionBox.height/2;
+    }
+    void setScale(float s) { 
+        scale = s; 
+        sprite.setScale(scale, scale); 
+        collisionBox.width *= s/scale;
+        collisionBox.height *= s/scale;
+    }
+    void setCollisionBox(float width, float height) {
+        collisionBox.width = width;
+        collisionBox.height = height;
+    }
 };
 
 class CarObstacle : public Obstacle {
@@ -37,8 +53,22 @@ public:
     CarObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(0.85f); // Increased from 0.7f
+        setScale(0.85f);
         speed = 3.0f;
+        setCollisionBox(70, 40); // Smaller collision box
+        sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
+    }
+};
+
+class Car2Obstacle : public Obstacle {
+public:
+    Car2Obstacle(float x, float y, const sf::Texture& texture) {
+        sprite.setTexture(texture);
+        sprite.setPosition(x, y);
+        setScale(0.85f);
+        speed = 3.0f;
+        setCollisionBox(70, 40); // Smaller collision box
+        sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
     }
 };
 
@@ -47,8 +77,10 @@ public:
     ConstructionObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(1.0f); // Increased from 0.8f
+        setScale(1.0f);
         speed = 3.0f;
+        setCollisionBox(60, 60); // Smaller collision box
+        sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
     }
 };
 
@@ -57,8 +89,10 @@ public:
     RoadBarrierObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(1.0f); // Doubled from 0.5f
+        setScale(1.0f);
         speed = 3.0f;
+        setCollisionBox(80, 20); // Smaller collision box
+        sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
     }
 };
 
@@ -67,8 +101,10 @@ public:
     ParkedBikeObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(0.6f); // Doubled from 0.3f
+        setScale(0.6f);
         speed = 3.0f;
+        setCollisionBox(60, 30); // Smaller collision box
+        sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
     }
 };
 
@@ -77,8 +113,10 @@ public:
     PuddleObstacle(float x, float y, const sf::Texture& texture) {
         sprite.setTexture(texture);
         sprite.setPosition(x, y);
-        setScale(0.9f); // Increased from 0.8f
+        setScale(0.9f);
         speed = 3.0f;
+        setCollisionBox(70, 20); // Smaller collision box
+        sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
     }
 };
 
@@ -96,9 +134,9 @@ private:
     
     // Bike sprite
     sf::Sprite bike;
-    const float bikeWidth = 48.0f;  // Increased from 40
-    const float bikeHeight = 84.0f; // Increased from 70
-    float bikeY = 440.0f;          // Adjusted position
+    const float bikeWidth = 48.0f;
+    const float bikeHeight = 84.0f;
+    float bikeY = 440.0f;
     float bikeSpeed = 4.0f;
     bool isBoosting = false;
     float boostTimer = 0.0f;
@@ -106,6 +144,7 @@ private:
     const float maxRotation = 15.0f;
     bool inPuddle = false;
     float puddleSlowTimer = 0.0f;
+    sf::FloatRect bikeCollisionBox;
 
     // Road
     sf::Texture roadTexture;
@@ -116,6 +155,7 @@ private:
     // Obstacles
     std::vector<std::unique_ptr<Obstacle>> obstacles;
     sf::Texture carTexture;
+    sf::Texture car2Texture;
     sf::Texture constructionTexture;
     sf::Texture barrierTexture;
     sf::Texture parkedBikeTexture;
@@ -142,28 +182,29 @@ private:
     sf::Font font;
     sf::Text playText;
     sf::Text quitText;
+    sf::Text aboutText;
     sf::Text scoreText;
     sf::Text difficultyText;
     sf::Text boostText;
+    sf::Text pauseText;
+    sf::Text aboutContentText;
     sf::RectangleShape playButtonBg;
     sf::RectangleShape quitButtonBg;
+    sf::RectangleShape aboutButtonBg;
+    sf::RectangleShape aboutPanel;
 
     void loadBikeAnimation() {
         if (!bikeSheet.loadFromFile("assets/bike_sheet.png")) {
-            std::cerr << "Error loading bike sprite sheet - creating placeholder\n";
             sf::Image placeholder;
-            placeholder.create(192, 84, sf::Color::Transparent); // 4 frames × 48x84
+            placeholder.create(192, 84, sf::Color::Transparent);
             
-            // Draw 4-frame bike animation (red bike with black wheels)
             for (int i = 0; i < 4; i++) {
                 int frameX = i * 48;
-                // Bike frame
                 for (int y = 24; y < 60; y++) {
                     for (int x = frameX + 12; x < frameX + 36; x++) {
                         placeholder.setPixel(x, y, sf::Color::Red);
                     }
                 }
-                // Wheels
                 for (int y = 0; y < 84; y++) {
                     for (int x = 0; x < 48; x++) {
                         float dist1 = std::hypot(x-(frameX+30), y-72);
@@ -186,11 +227,12 @@ private:
         bike.setTexture(bikeSheet);
         bike.setTextureRect(frameRects[0]);
         bike.setOrigin(bikeWidth/2, bikeHeight/2);
+        bikeCollisionBox.width = 30;
+        bikeCollisionBox.height = 60;
     }
 
     void initRoad() {
         if (!roadTexture.loadFromFile("assets/road_texture.png")) {
-            std::cerr << "Error loading road texture - creating placeholder\n";
             sf::Image roadImg;
             roadImg.create(800, 600, sf::Color(100, 100, 100));
             for (int x = 0; x < 800; x += 50) {
@@ -216,7 +258,7 @@ private:
     void resetGame() {
         bike.setPosition(400, 440);
         bikeY = 440.0f;
-        bikeRotation = 0.0f;
+        bikeRotation = 1.0f;
         obstacles.clear();
         nextObstacleY = -100.0f;
         score = 0;
@@ -237,13 +279,14 @@ private:
     void addRandomObstacle() {
         float obstacleX = 100 + rand() % 600;
         
-        int obstacleType = rand() % 5; // 5 types (0-4)
+        int obstacleType = rand() % 6; // Now 6 types (0-5)
         switch (obstacleType) {
             case 0: obstacles.push_back(std::make_unique<CarObstacle>(obstacleX, nextObstacleY, carTexture)); break;
-            case 1: obstacles.push_back(std::make_unique<ConstructionObstacle>(obstacleX, nextObstacleY, constructionTexture)); break;
-            case 2: obstacles.push_back(std::make_unique<RoadBarrierObstacle>(obstacleX, nextObstacleY, barrierTexture)); break;
-            case 3: obstacles.push_back(std::make_unique<ParkedBikeObstacle>(obstacleX, nextObstacleY, parkedBikeTexture)); break;
-            case 4: obstacles.push_back(std::make_unique<PuddleObstacle>(obstacleX, nextObstacleY, puddleTexture)); break;
+            case 1: obstacles.push_back(std::make_unique<Car2Obstacle>(obstacleX, nextObstacleY, car2Texture)); break;
+            case 2: obstacles.push_back(std::make_unique<ConstructionObstacle>(obstacleX, nextObstacleY, constructionTexture)); break;
+            case 3: obstacles.push_back(std::make_unique<RoadBarrierObstacle>(obstacleX, nextObstacleY, barrierTexture)); break;
+            case 4: obstacles.push_back(std::make_unique<ParkedBikeObstacle>(obstacleX, nextObstacleY, parkedBikeTexture)); break;
+            case 5: obstacles.push_back(std::make_unique<PuddleObstacle>(obstacleX, nextObstacleY, puddleTexture)); break;
         }
         nextObstacleY -= obstacleSpacing;
     }
@@ -259,6 +302,12 @@ private:
         playButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
         playButtonBg.setOutlineThickness(2);
         playButtonBg.setOutlineColor(sf::Color::White);
+
+        aboutButtonBg.setSize(sf::Vector2f(150, 60));
+        aboutButtonBg.setPosition(325, 295);
+        aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
+        aboutButtonBg.setOutlineThickness(2);
+        aboutButtonBg.setOutlineColor(sf::Color::White);
 
         quitButtonBg.setSize(sf::Vector2f(150, 60));
         quitButtonBg.setPosition(325, 345);
@@ -276,6 +325,15 @@ private:
         playText.setOutlineThickness(2);
         playText.setStyle(sf::Text::Bold);
 
+        aboutText.setString("ABOUT");
+        aboutText.setFont(font);
+        aboutText.setCharacterSize(45);
+        aboutText.setPosition(340, 300);
+        aboutText.setFillColor(sf::Color::White);
+        aboutText.setOutlineColor(sf::Color::Black);
+        aboutText.setOutlineThickness(2);
+        aboutText.setStyle(sf::Text::Bold);
+
         quitText.setString("QUIT");
         quitText.setFont(font);
         quitText.setCharacterSize(45);
@@ -284,6 +342,25 @@ private:
         quitText.setOutlineColor(sf::Color::Black);
         quitText.setOutlineThickness(2);
         quitText.setStyle(sf::Text::Bold);
+
+        // About panel
+        aboutPanel.setSize(sf::Vector2f(600, 400));
+        aboutPanel.setPosition(100, 100);
+        aboutPanel.setFillColor(sf::Color(0, 0, 0, 220));
+        aboutPanel.setOutlineThickness(3);
+        aboutPanel.setOutlineColor(sf::Color::White);
+
+        aboutContentText.setString("BIKE RACER GAME\n\n"
+                                "Avoid obstacles and score points!\n"
+                                "Controls:\n"
+                                "LEFT/RIGHT - Move\n"
+                                "UP - Boost\n"
+                                "ESC - Pause\n\n"
+                                "Created with SFML");
+        aboutContentText.setFont(font);
+        aboutContentText.setCharacterSize(30);
+        aboutContentText.setPosition(150, 150);
+        aboutContentText.setFillColor(sf::Color::White);
     }
 
 public:
@@ -293,7 +370,6 @@ public:
         
         std::srand(std::time(nullptr));
         
-        // Load textures
         if (!backgroundTexture.loadFromFile("assets/background.png")) {
             sf::Image bgImg;
             bgImg.create(800, 600, sf::Color(135, 206, 235));
@@ -326,6 +402,15 @@ public:
             carTexture.loadFromImage(carImg);
         }
         
+        if (!car2Texture.loadFromFile("assets/car2.png")) {
+            sf::Image carImg;
+            carImg.create(100, 60, sf::Color::Transparent);
+            for (int y = 20; y < 40; y++) {
+                for (int x = 10; x < 90; x++) carImg.setPixel(x, y, sf::Color::Red);
+            }
+            car2Texture.loadFromImage(carImg);
+        }
+        
         if (!constructionTexture.loadFromFile("assets/construction.png")) {
             sf::Image conImg;
             conImg.create(100, 100, sf::Color::Transparent);
@@ -353,11 +438,9 @@ public:
         if (!parkedBikeTexture.loadFromFile("assets/parked_bike.png")) {
             sf::Image bikeImg;
             bikeImg.create(200, 67, sf::Color::Transparent);
-            // Frame
             for (int y = 20; y < 50; y++) {
                 for (int x = 50; x < 150; x++) bikeImg.setPixel(x, y, sf::Color::Blue);
             }
-            // Wheels
             for (int y = 0; y < 67; y++) {
                 for (int x = 0; x < 200; x++) {
                     if (std::hypot(x-60, y-60) < 15 || std::hypot(x-140, y-60) < 15) {
@@ -414,6 +497,13 @@ public:
         boostText.setPosition(80, 105);
         boostText.setFillColor(sf::Color::White);
         boostText.setString("READY");
+
+        pauseText.setString("PAUSED\nPress ESC to resume");
+        pauseText.setFont(font);
+        pauseText.setCharacterSize(50);
+        pauseText.setPosition(200, 200);
+        pauseText.setFillColor(sf::Color::White);
+        pauseText.setStyle(sf::Text::Bold);
     }
 
     void run() {
@@ -421,7 +511,9 @@ public:
         while (window.isOpen()) {
             float deltaTime = clock.restart().asSeconds();
             handleInput();
-            update(deltaTime);
+            if (currentState == PLAYING) {
+                update(deltaTime);
+            }
             render();
         }
     }
@@ -433,14 +525,32 @@ private:
             if (event.type == sf::Event::Closed)
                 window.close();
 
+            if (event.type == sf::Event::Resized) {
+                sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
+                window.setView(sf::View(visibleArea));
+            }
+
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
+                if (currentState == PLAYING) {
+                    currentState = PAUSED;
+                } else if (currentState == PAUSED) {
+                    currentState = PLAYING;
+                } else if (currentState == ABOUT) {
+                    currentState = MENU;
+                }
+            }
+
             if (currentState == MENU && event.type == sf::Event::MouseButtonPressed) {
-                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
                 
-                if (playText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                if (playText.getGlobalBounds().contains(mousePos)) {
                     currentState = PLAYING;
                     resetGame();
                 }
-                else if (quitText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                else if (aboutText.getGlobalBounds().contains(mousePos)) {
+                    currentState = ABOUT;
+                }
+                else if (quitText.getGlobalBounds().contains(mousePos)) {
                     window.close();
                 }
             }
@@ -468,6 +578,8 @@ private:
             
             bike.setPosition(bikeX, bikeY);
             bike.setRotation(bikeRotation);
+            bikeCollisionBox.left = bikeX - bikeCollisionBox.width/2;
+            bikeCollisionBox.top = bikeY - bikeCollisionBox.height/2;
 
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !isBoosting) {
                 isBoosting = true;
@@ -480,80 +592,78 @@ private:
     }
 
     void update(float deltaTime) {
-        if (currentState == PLAYING) {
-            // Animation
-            animationTimer += deltaTime;
-            while (animationTimer >= frameTime) {
-                animationTimer -= frameTime;
-                currentFrame = (currentFrame + 1) % 4;
-                bike.setTextureRect(frameRects[currentFrame]);
+        // Animation
+        animationTimer += deltaTime;
+        while (animationTimer >= frameTime) {
+            animationTimer -= frameTime;
+            currentFrame = (currentFrame + 1) % 4;
+            bike.setTextureRect(frameRects[currentFrame]);
+        }
+
+        // Boost
+        if (isBoosting) {
+            boostTimer -= deltaTime;
+            bikeY = 440 - 30 * sin(boostTimer * 10.0f);
+            
+            if (static_cast<int>(boostTimer * 10) % 2 == 0) {
+                bike.setColor(sf::Color(255, 255, 200));
+            } else {
+                bike.setColor(sf::Color::White);
             }
 
-            // Boost
-            if (isBoosting) {
-                boostTimer -= deltaTime;
-                bikeY = 440 - 30 * sin(boostTimer * 10.0f);
-                
-                if (static_cast<int>(boostTimer * 10) % 2 == 0) {
-                    bike.setColor(sf::Color(255, 255, 200));
+            if (boostTimer <= 0) {
+                isBoosting = false;
+                roadSpeed /= 1.7f;
+                bikeY = 440;
+                bike.setColor(sf::Color::White);
+                boostText.setString("READY");
+                frameTime = 0.1f;
+            }
+        }
+
+        // Puddle effect
+        if (inPuddle) {
+            puddleSlowTimer -= deltaTime;
+            if (puddleSlowTimer <= 0) {
+                bikeSpeed = 4.0f;
+                inPuddle = false;
+                bike.setColor(sf::Color::White);
+            }
+        }
+
+        // Road
+        for (auto& segment : roadSegments) {
+            segment.move(0, roadSpeed);
+            if (segment.getPosition().y > roadSegmentHeight) {
+                segment.setPosition(0, segment.getPosition().y - 2 * roadSegmentHeight);
+            }
+        }
+
+        // Obstacles
+        for (auto& obstacle : obstacles) {
+            obstacle->update(deltaTime);
+            
+            // Collision with smaller collision boxes
+            if (bikeCollisionBox.intersects(obstacle->getCollisionBox())) {
+                if (dynamic_cast<PuddleObstacle*>(obstacle.get())) {
+                    bikeSpeed = 2.0f;
+                    inPuddle = true;
+                    puddleSlowTimer = 1.5f;
+                    bike.setColor(sf::Color(150, 150, 255));
                 } else {
-                    bike.setColor(sf::Color::White);
-                }
-
-                if (boostTimer <= 0) {
-                    isBoosting = false;
-                    roadSpeed /= 1.7f;
-                    bikeY = 440;
-                    bike.setColor(sf::Color::White);
-                    boostText.setString("READY");
-                    frameTime = 0.1f;
+                    currentState = MENU;
                 }
             }
+        }
 
-            // Puddle effect
-            if (inPuddle) {
-                puddleSlowTimer -= deltaTime;
-                if (puddleSlowTimer <= 0) {
-                    bikeSpeed = 4.0f;
-                    inPuddle = false;
-                    bike.setColor(sf::Color::White);
-                }
-            }
-
-            // Road
-            for (auto& segment : roadSegments) {
-                segment.move(0, roadSpeed);
-                if (segment.getPosition().y > roadSegmentHeight) {
-                    segment.setPosition(0, segment.getPosition().y - 2 * roadSegmentHeight);
-                }
-            }
-
-            // Obstacles
-            for (auto& obstacle : obstacles) {
-                obstacle->update(deltaTime);
-                
-                // Collision
-                if (bike.getGlobalBounds().intersects(obstacle->getBounds())) {
-                    if (dynamic_cast<PuddleObstacle*>(obstacle.get())) {
-                        bikeSpeed = 2.0f;
-                        inPuddle = true;
-                        puddleSlowTimer = 1.5f;
-                        bike.setColor(sf::Color(150, 150, 255));
-                    } else {
-                        currentState = MENU;
-                    }
-                }
-            }
-
-            // Obstacle management
-            if (!obstacles.empty() && obstacles.front()->getY() > 650) {
-                obstacles.erase(obstacles.begin());
-                addRandomObstacle();
-                score += 1 + static_cast<int>(roadSpeed / 3.0f);
-                
-                if (score % difficultyInterval == 0) {
-                    increaseDifficulty();
-                }
+        // Obstacle management
+        if (!obstacles.empty() && obstacles.front()->getY() > 650) {
+            obstacles.erase(obstacles.begin());
+            addRandomObstacle();
+            score += 1 + static_cast<int>(roadSpeed / 3.0f);
+            
+            if (score % difficultyInterval == 0) {
+                increaseDifficulty();
             }
         }
     }
@@ -561,7 +671,7 @@ private:
     void render() {
         window.clear();
 
-        if (currentState == PLAYING) {
+        if (currentState == PLAYING || currentState == PAUSED) {
             // Road
             for (auto& segment : roadSegments) {
                 window.draw(segment);
@@ -584,15 +694,19 @@ private:
             
             window.draw(boostIcon);
             window.draw(boostText);
-        } else {
-            // Menu
+
+            if (currentState == PAUSED) {
+                window.draw(pauseText);
+            }
+        } 
+        else if (currentState == MENU) {
             window.draw(menuBackground);
             window.draw(playButtonBg);
+            window.draw(aboutButtonBg);
             window.draw(quitButtonBg);
             
-            // Highlight buttons on hover
-            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-            if (playText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+            sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+            if (playText.getGlobalBounds().contains(mousePos)) {
                 playButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
                 playText.setFillColor(sf::Color(200, 255, 200));
             } else {
@@ -600,7 +714,15 @@ private:
                 playText.setFillColor(sf::Color::White);
             }
             
-            if (quitText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+            if (aboutText.getGlobalBounds().contains(mousePos)) {
+                aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
+                aboutText.setFillColor(sf::Color(200, 200, 255));
+            } else {
+                aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
+                aboutText.setFillColor(sf::Color::White);
+            }
+            
+            if (quitText.getGlobalBounds().contains(mousePos)) {
                 quitButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
                 quitText.setFillColor(sf::Color(255, 200, 200));
             } else {
@@ -609,9 +731,9 @@ private:
             }
             
             window.draw(playText);
+            window.draw(aboutText);
             window.draw(quitText);
             
-            // Title
             sf::Text title("BIKE RACER", font, 60);
             title.setPosition(220, 100);
             title.setFillColor(sf::Color::White);
@@ -619,6 +741,11 @@ private:
             title.setOutlineColor(sf::Color::Black);
             title.setOutlineThickness(2);
             window.draw(title);
+        }
+        else if (currentState == ABOUT) {
+            window.draw(menuBackground);
+            window.draw(aboutPanel);
+            window.draw(aboutContentText);
         }
 
         window.display();
