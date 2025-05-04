@@ -77,7 +77,7 @@ ParkedBikeObstacle::ParkedBikeObstacle(float x, float y, const sf::Texture& text
     sprite.setPosition(x, y);
     setScale(0.6f);
     speed = 3.0f;
-    setCollisionBox(60, 30);
+    setCollisionBox(170, 40);
     sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
 }
 
