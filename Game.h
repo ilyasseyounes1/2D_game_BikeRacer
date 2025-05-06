@@ -4,73 +4,17 @@
 #include <memory>
 #include "Obstacle.h"
 
-enum GameState { MENU, PLAYING, PAUSED, ABOUT };
-
 class Game {
+public:
+    Game();
+    void run();
+
 private:
-    sf::RenderWindow window;
-    GameState currentState = MENU;
-    
-    sf::Texture bikeSheet;
-    std::vector<sf::IntRect> frameRects;
-    int currentFrame = 0;
-    float frameTime = 0.1f;
-    float animationTimer = 0.0f;
-    
-    sf::Sprite bike;
-    const float bikeWidth = 48.0f;
-    const float bikeHeight = 84.0f;
-    float bikeY = 440.0f;
-    float bikeSpeed = 4.0f;
-    bool isBoosting = false;
-    float boostTimer = 0.0f;
-    float bikeRotation = 0.0f;
-    const float maxRotation = 15.0f;
-    bool inPuddle = false;
-    float puddleSlowTimer = 0.0f;
-    sf::FloatRect bikeCollisionBox;
+    enum GameState { MENU, PLAYING, PAUSED, ABOUT };
 
-    sf::Texture roadTexture;
-    std::vector<sf::Sprite> roadSegments;
-    float roadSpeed = 3.0f;
-    const float roadSegmentHeight = 600.0f;
-
-    std::vector<std::unique_ptr<Obstacle>> obstacles;
-    sf::Texture carTexture;
-    sf::Texture car2Texture;
-    sf::Texture constructionTexture;
-    sf::Texture barrierTexture;
-    sf::Texture parkedBikeTexture;
-    sf::Texture puddleTexture;
-    float nextObstacleY = -100.0f;
-    const float obstacleSpacing = 170.0f;
-
-    int score = 0;
-    const int difficultyInterval = 10;
-    float maxTrackSpeed = 6.0f;
-
-    sf::Texture backgroundTexture;
-    sf::Texture menuBgTexture;
-    sf::Texture boostTexture;
-
-    sf::Sprite background;
-    sf::Sprite menuBackground;
-    sf::Sprite boostIcon;
-
-    sf::Font font;
-    sf::Text playText;
-    sf::Text quitText;
-    sf::Text aboutText;
-    sf::Text scoreText;
-    sf::Text difficultyText;
-    sf::Text boostText;
-    sf::Text pauseText;
-    sf::Text aboutContentText;
-    sf::RectangleShape playButtonBg;
-    sf::RectangleShape quitButtonBg;
-    sf::RectangleShape aboutButtonBg;
-    sf::RectangleShape aboutPanel;
-
+    void handleInput();
+    void update(float deltaTime);
+    void render();
     void loadBikeAnimation();
     void initRoad();
     void resetGame();
@@ -79,12 +23,65 @@ private:
     void increaseDifficulty();
     void setupMenu();
 
-public:
-    Game();
-    void run();
+    sf::RenderWindow window;
+    GameState currentState = MENU;
 
-private:
-    void handleInput();
-    void update(float deltaTime);
-    void render();
+    // Bike
+    sf::Sprite bike;
+    sf::Texture bikeSheet;
+    std::vector<sf::IntRect> frameRects;
+    int currentFrame = 0;
+    float animationTimer = 0.0f;
+    float frameTime = 0.1f;
+    const float bikeWidth = 48.0f;
+    const float bikeHeight = 84.0f;
+    sf::FloatRect bikeCollisionBox;
+    float bikeRotation = 0.0f;
+    const float maxRotation = 15.0f;
+    float bikeSpeed = 4.0f;
+    float bikeY = 440.0f;
+
+    // Road
+    sf::Texture roadTexture;
+    std::vector<sf::Sprite> roadSegments;
+    const int roadSegmentHeight = 600;
+    float roadSpeed = 2.5f;
+    const float maxTrackSpeed = 8.0f;
+
+    // Obstacles
+    std::vector<std::unique_ptr<Obstacle>> obstacles;
+    float nextObstacleY = -100.0f;
+    const float obstacleSpacing = 300.0f;
+    const int difficultyInterval = 10;
+
+    // Textures
+    sf::Texture backgroundTexture;
+    sf::Texture menuBgTexture;
+    sf::Texture carTexture;
+    sf::Texture car2Texture;
+    sf::Texture constructionTexture;
+    sf::Texture barrierTexture;
+    sf::Texture parkedBikeTexture;
+
+    // Sprites
+    sf::Sprite background;
+    sf::Sprite menuBackground;
+
+    // Game time
+    sf::Clock gameClock;
+    sf::Time elapsedTime;
+
+    // UI
+    sf::Font font;
+    sf::Text timeText;
+    sf::Text difficultyText;
+    sf::Text playText;
+    sf::Text aboutText;
+    sf::Text quitText;
+    sf::Text pauseText;
+    sf::Text aboutContentText;
+    sf::RectangleShape playButtonBg;
+    sf::RectangleShape aboutButtonBg;
+    sf::RectangleShape quitButtonBg;
+    sf::RectangleShape aboutPanel;
 };

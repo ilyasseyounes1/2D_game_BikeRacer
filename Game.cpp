@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <SFML/Graphics.hpp>
 
-
 void Game::loadBikeAnimation() {
     if (!bikeSheet.loadFromFile("assets/bike_sheet.png")) {
         sf::Image placeholder;
@@ -73,10 +72,9 @@ void Game::resetGame() {
     bikeRotation = 1.0f;
     obstacles.clear();
     nextObstacleY = -100.0f;
-    score = 0;
     roadSpeed = 2.5f;
     bikeSpeed = 4.0f;
-    inPuddle = false;
+    gameClock.restart();
     generateInitialObstacles();
     currentFrame = 0;
     animationTimer = 0.0f;
@@ -91,14 +89,13 @@ void Game::generateInitialObstacles() {
 void Game::addRandomObstacle() {
     float obstacleX = 100 + rand() % 600;
     
-    int obstacleType = rand() % 6;
+    int obstacleType = rand() % 5;
     switch (obstacleType) {
         case 0: obstacles.push_back(std::make_unique<CarObstacle>(obstacleX, nextObstacleY, carTexture)); break;
         case 1: obstacles.push_back(std::make_unique<Car2Obstacle>(obstacleX, nextObstacleY, car2Texture)); break;
         case 2: obstacles.push_back(std::make_unique<ConstructionObstacle>(obstacleX, nextObstacleY, constructionTexture)); break;
         case 3: obstacles.push_back(std::make_unique<RoadBarrierObstacle>(obstacleX, nextObstacleY, barrierTexture)); break;
         case 4: obstacles.push_back(std::make_unique<ParkedBikeObstacle>(obstacleX, nextObstacleY, parkedBikeTexture)); break;
-        case 5: obstacles.push_back(std::make_unique<PuddleObstacle>(obstacleX, nextObstacleY, puddleTexture)); break;
     }
     nextObstacleY -= obstacleSpacing;
 }
@@ -160,10 +157,9 @@ void Game::setupMenu() {
     aboutPanel.setOutlineColor(sf::Color::White);
 
     aboutContentText.setString("BIKE RACER GAME\n\n"
-                            "Avoid obstacles and score points!\n"
+                            "Avoid obstacles!\n"
                             "Controls:\n"
                             "LEFT/RIGHT - Move\n"
-                            "UP - Boost\n"
                             "ESC - Pause\n\n"
                             "Created with SFML");
     aboutContentText.setFont(font);
@@ -177,6 +173,17 @@ void Game::setupMenu() {
     pauseText.setPosition(200, 200);
     pauseText.setFillColor(sf::Color::White);
     pauseText.setStyle(sf::Text::Bold);
+
+    timeText.setFont(font);
+    timeText.setCharacterSize(28);
+    timeText.setPosition(20, 20);
+    timeText.setFillColor(sf::Color::White);
+    timeText.setStyle(sf::Text::Bold);
+
+    difficultyText.setFont(font);
+    difficultyText.setCharacterSize(24);
+    difficultyText.setPosition(20, 60);
+    difficultyText.setFillColor(sf::Color::White);
 }
 
 Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
@@ -195,16 +202,6 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
         sf::Image menuImg;
         menuImg.create(800, 600, sf::Color(50, 50, 100));
         menuBgTexture.loadFromImage(menuImg);
-    }
-    
-    if (!boostTexture.loadFromFile("assets/boost_icon.png")) {
-        sf::Image boostImg;
-        boostImg.create(30, 30, sf::Color::Transparent);
-        for (int i = 0; i < 30; i++) {
-            boostImg.setPixel(15 + i/3, i, sf::Color::Yellow);
-            boostImg.setPixel(15 - i/3, i, sf::Color::Yellow);
-        }
-        boostTexture.loadFromImage(boostImg);
     }
     
     if (!carTexture.loadFromFile("assets/car.jpg")) {
@@ -264,23 +261,9 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
         }
         parkedBikeTexture.loadFromImage(bikeImg);
     }
-    
-    if (!puddleTexture.loadFromFile("assets/puddle.png")) {
-        sf::Image puddleImg;
-        puddleImg.create(100, 30, sf::Color::Transparent);
-        for (int y = 0; y < 30; y++) {
-            for (int x = 0; x < 100; x++) {
-                if (std::hypot(x-50, y-15) < 30) puddleImg.setPixel(x, y, sf::Color(0, 0, 255, 150));
-            }
-        }
-        puddleTexture.loadFromImage(puddleImg);
-    }
 
     background.setTexture(backgroundTexture);
     menuBackground.setTexture(menuBgTexture);
-    boostIcon.setTexture(boostTexture);
-    boostIcon.setPosition(30, 100);
-    boostIcon.setScale(1.5f, 1.5f);
     
     loadBikeAnimation();
     initRoad();
@@ -290,23 +273,6 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
         font = sf::Font();
     }
     setupMenu();
-
-    scoreText.setFont(font);
-    scoreText.setCharacterSize(28);
-    scoreText.setPosition(20, 20);
-    scoreText.setFillColor(sf::Color::White);
-    scoreText.setStyle(sf::Text::Bold);
-
-    difficultyText.setFont(font);
-    difficultyText.setCharacterSize(24);
-    difficultyText.setPosition(20, 60);
-    difficultyText.setFillColor(sf::Color::White);
-
-    boostText.setFont(font);
-    boostText.setCharacterSize(24);
-    boostText.setPosition(80, 105);
-    boostText.setFillColor(sf::Color::White);
-    boostText.setString("READY");
 }
 
 void Game::run() {
@@ -382,14 +348,6 @@ void Game::handleInput() {
         bike.setRotation(bikeRotation);
         bikeCollisionBox.left = bikeX - bikeCollisionBox.width/2;
         bikeCollisionBox.top = bikeY - bikeCollisionBox.height/2;
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !isBoosting) {
-            isBoosting = true;
-            boostTimer = 0.7f;
-            roadSpeed *= 1.7f;
-            boostText.setString("BOOSTING!");
-            frameTime = 0.05f;
-        }
     }
 }
 
@@ -399,35 +357,6 @@ void Game::update(float deltaTime) {
         animationTimer -= frameTime;
         currentFrame = (currentFrame + 1) % 4;
         bike.setTextureRect(frameRects[currentFrame]);
-    }
-
-    if (isBoosting) {
-        boostTimer -= deltaTime;
-        bikeY = 440 - 30 * sin(boostTimer * 10.0f);
-        
-        if (static_cast<int>(boostTimer * 10) % 2 == 0) {
-            bike.setColor(sf::Color(255, 255, 200));
-        } else {
-            bike.setColor(sf::Color::White);
-        }
-
-        if (boostTimer <= 0) {
-            isBoosting = false;
-            roadSpeed /= 1.7f;
-            bikeY = 440;
-            bike.setColor(sf::Color::White);
-            boostText.setString("READY");
-            frameTime = 0.1f;
-        }
-    }
-
-    if (inPuddle) {
-        puddleSlowTimer -= deltaTime;
-        if (puddleSlowTimer <= 0) {
-            bikeSpeed = 4.0f;
-            inPuddle = false;
-            bike.setColor(sf::Color::White);
-        }
     }
 
     for (auto& segment : roadSegments) {
@@ -441,23 +370,16 @@ void Game::update(float deltaTime) {
         obstacle->update(deltaTime);
         
         if (bikeCollisionBox.intersects(obstacle->getCollisionBox())) {
-            if (dynamic_cast<PuddleObstacle*>(obstacle.get())) {
-                bikeSpeed = 2.0f;
-                inPuddle = true;
-                puddleSlowTimer = 1.5f;
-                bike.setColor(sf::Color(150, 150, 255));
-            } else {
-                currentState = MENU;
-            }
+            currentState = MENU;
         }
     }
 
     if (!obstacles.empty() && obstacles.front()->getY() > 650) {
         obstacles.erase(obstacles.begin());
         addRandomObstacle();
-        score += 1 + static_cast<int>(roadSpeed / 3.0f);
         
-        if (score % difficultyInterval == 0) {
+        elapsedTime = gameClock.getElapsedTime();
+        if (static_cast<int>(elapsedTime.asSeconds()) % difficultyInterval == 0) {
             increaseDifficulty();
         }
     }
@@ -477,14 +399,15 @@ void Game::render() {
         
         window.draw(bike);
         
-        scoreText.setString("SCORE: " + std::to_string(score));
-        window.draw(scoreText);
+        elapsedTime = gameClock.getElapsedTime();
+        int seconds = static_cast<int>(elapsedTime.asSeconds());
+        int minutes = seconds / 60;
+        seconds %= 60;
+        timeText.setString("TIME: " + std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") + std::to_string(seconds));
+        window.draw(timeText);
         
         difficultyText.setString("SPEED: " + std::to_string(static_cast<int>(roadSpeed * 50)) + "%");
         window.draw(difficultyText);
-        
-        window.draw(boostIcon);
-        window.draw(boostText);
 
         if (currentState == PAUSED) {
             window.draw(pauseText);
