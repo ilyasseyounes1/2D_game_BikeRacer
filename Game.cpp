@@ -327,36 +327,10 @@ void Game::render() {
         window.draw(aboutButtonBg);
         window.draw(quitButtonBg);
         
-        // sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-        // if (playText.getGlobalBounds().contains(mousePos)) {
-        //     playButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
-        //     playText.setFillColor(sf::Color(200, 255, 200));
-        // } else {
-        //     playButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-        //     playText.setFillColor(sf::Color::White);
-        // }
-        
-        // if (aboutText.getGlobalBounds().contains(mousePos)) {
-        //     aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
-        //     aboutText.setFillColor(sf::Color(200, 200, 255));
-        // } else {
-        //     aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-        //     aboutText.setFillColor(sf::Color::White);
-        // }
-        
-        // if (quitText.getGlobalBounds().contains(mousePos)) {
-        //     quitButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
-        //     quitText.setFillColor(sf::Color(255, 200, 200));
-        // } else {
-        //     quitButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-        //     quitText.setFillColor(sf::Color::White);
-        // }
-        
         window.draw(playText);
         window.draw(aboutText);
         window.draw(quitText);
-        
-      
+
     }
     else if (currentState == ABOUT) {
         window.draw(menuBackground);
