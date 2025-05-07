@@ -3,41 +3,37 @@
 #include <ctime>
 #include <cstdlib>
 #include <SFML/Graphics.hpp>
-
+    //********************************************************** */
 void Game::loadBikeAnimation() {
-    if (!bikeSheet.loadFromFile("assets/bike_sheet.png")) {
+    bool loadedFromFile = bikeSheet.loadFromFile("assets/bike_sheet.png");
+
+    if (!loadedFromFile) {
+        // If loading fails, create a simple placeholder image
+        int frameWidth = 48;
+        int frameHeight = 84;
         sf::Image placeholder;
-        placeholder.create(192, 84, sf::Color::Transparent);
-        
-        for (int i = 0; i < 4; i++) {
-            int frameX = i * 48;
-            for (int y = 24; y < 60; y++) {
-                for (int x = frameX + 12; x < frameX + 36; x++) {
-                    placeholder.setPixel(x, y, sf::Color::Red);
-                }
-            }
-            for (int y = 0; y < 84; y++) {
-                for (int x = 0; x < 48; x++) {
-                    float dist1 = std::hypot(x-(frameX+30), y-72);
-                    float dist2 = std::hypot(x-(frameX+18), y-72);
-                    if (dist1 < 10 || dist2 < 10) {
-                        placeholder.setPixel(x, y, sf::Color::Black);
-                    }
-                }
-            }
-        }
+        placeholder.create(frameWidth, frameHeight, sf::Color::Red); 
         bikeSheet.loadFromImage(placeholder);
     }
-    
+
     bikeSheet.setSmooth(false);
+
     frameRects.clear();
-    for (int i = 0; i < 4; ++i) {
-        frameRects.push_back(sf::IntRect(i * 48, 0, 48, 84));
+    if (loadedFromFile) {
+        for (int i = 0; i < 4; ++i) {
+            frameRects.push_back(sf::IntRect(i * 48, 0, 48, 84));
+        }
+        currentFrame %= 4;
+    } else {
+        frameRects.push_back(sf::IntRect(0, 0, 48, 84));
+        currentFrame = 0;
     }
-    
+
     bike.setTexture(bikeSheet);
-    bike.setTextureRect(frameRects[0]);
-    bike.setOrigin(bikeWidth/2, bikeHeight/2);
+    bike.setTextureRect(frameRects[currentFrame]);
+
+    bike.setOrigin(48.0f / 2.0f, 84.0f / 2.0f);
+
     bikeCollisionBox.width = 30;
     bikeCollisionBox.height = 60;
 }
@@ -45,18 +41,11 @@ void Game::loadBikeAnimation() {
 void Game::initRoad() {
     if (!roadTexture.loadFromFile("assets/road_texture.png")) {
         sf::Image roadImg;
-        roadImg.create(800, 600, sf::Color(100, 100, 100));
-        for (int x = 0; x < 800; x += 50) {
-            for (int y = 0; y < 600; y++) {
-                if (y % 20 < 10 && x % 100 < 50) {
-                    roadImg.setPixel(x, y, sf::Color::Yellow);
-                }
-            }
-        }
+        roadImg.create(800, 600, sf::Color(100, 100, 100)); // Solid dark grey
         roadTexture.loadFromImage(roadImg);
     }
     roadTexture.setRepeated(true);
-    
+
     for (int i = 0; i < 2; ++i) {
         sf::Sprite segment;
         segment.setTexture(roadTexture);
@@ -65,30 +54,27 @@ void Game::initRoad() {
         roadSegments.push_back(segment);
     }
 }
-
+//*********************************************************************** */
 void Game::resetGame() {
     bike.setPosition(400, 440);
     bikeY = 440.0f;
     bikeRotation = 1.0f;
-    obstacles.clear();
+    obstacles.clear(); 
     nextObstacleY = -100.0f;
-    roadSpeed = 2.5f;
-    bikeSpeed = 4.0f;
-    gameClock.restart();
-    generateInitialObstacles();
-    currentFrame = 0;
-    animationTimer = 0.0f;
-}
+    roadSpeed = 2.5f; 
+    bikeSpeed = 4.0f; 
+    gameClock.restart(); 
 
-void Game::generateInitialObstacles() {
     for (int i = 0; i < 5; ++i) {
         addRandomObstacle();
     }
-}
+    currentFrame = 0; 
+    animationTimer = 0.0f; }
+
 
 void Game::addRandomObstacle() {
     float obstacleX = 100 + rand() % 600;
-    
+
     int obstacleType = rand() % 5;
     switch (obstacleType) {
         case 0: obstacles.push_back(std::make_unique<CarObstacle>(obstacleX, nextObstacleY, carTexture)); break;
@@ -99,56 +85,35 @@ void Game::addRandomObstacle() {
     }
     nextObstacleY -= obstacleSpacing;
 }
+//**************************************************************** */
 
-void Game::increaseDifficulty() {
-    roadSpeed = std::min(maxTrackSpeed, roadSpeed * 1.6f);
+void Game::setupButtonBackground(sf::RectangleShape& shape, const sf::Vector2f& position) {
+    shape.setSize(sf::Vector2f(150, 60));
+    shape.setPosition(position);
+    shape.setFillColor(sf::Color(0, 0, 0, 200));
+    shape.setOutlineThickness(2);
+    shape.setOutlineColor(sf::Color::White);
+}
+
+void Game::setupButtonText(sf::Text& text, const std::string& str, const sf::Vector2f& position) {
+    text.setString(str);
+    text.setFont(font);
+    text.setCharacterSize(45);
+    text.setPosition(position);
+    text.setFillColor(sf::Color::White);
+    text.setOutlineColor(sf::Color::Black);
+    text.setOutlineThickness(2);
+    text.setStyle(sf::Text::Bold);
 }
 
 void Game::setupMenu() {
-    playButtonBg.setSize(sf::Vector2f(150, 60));
-    playButtonBg.setPosition(325, 245);
-    playButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-    playButtonBg.setOutlineThickness(2);
-    playButtonBg.setOutlineColor(sf::Color::White);
+    setupButtonBackground(playButtonBg, sf::Vector2f(325, 245));
+    setupButtonBackground(aboutButtonBg, sf::Vector2f(325, 295));
+    setupButtonBackground(quitButtonBg, sf::Vector2f(325, 345));
 
-    aboutButtonBg.setSize(sf::Vector2f(150, 60));
-    aboutButtonBg.setPosition(325, 295);
-    aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-    aboutButtonBg.setOutlineThickness(2);
-    aboutButtonBg.setOutlineColor(sf::Color::White);
-
-    quitButtonBg.setSize(sf::Vector2f(150, 60));
-    quitButtonBg.setPosition(325, 345);
-    quitButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-    quitButtonBg.setOutlineThickness(2);
-    quitButtonBg.setOutlineColor(sf::Color::White);
-
-    playText.setString("PLAY");
-    playText.setFont(font);
-    playText.setCharacterSize(45);
-    playText.setPosition(350, 250);
-    playText.setFillColor(sf::Color::White);
-    playText.setOutlineColor(sf::Color::Black);
-    playText.setOutlineThickness(2);
-    playText.setStyle(sf::Text::Bold);
-
-    aboutText.setString("ABOUT");
-    aboutText.setFont(font);
-    aboutText.setCharacterSize(45);
-    aboutText.setPosition(340, 300);
-    aboutText.setFillColor(sf::Color::White);
-    aboutText.setOutlineColor(sf::Color::Black);
-    aboutText.setOutlineThickness(2);
-    aboutText.setStyle(sf::Text::Bold);
-
-    quitText.setString("QUIT");
-    quitText.setFont(font);
-    quitText.setCharacterSize(45);
-    quitText.setPosition(350, 350);
-    quitText.setFillColor(sf::Color::White);
-    quitText.setOutlineColor(sf::Color::Black);
-    quitText.setOutlineThickness(2);
-    quitText.setStyle(sf::Text::Bold);
+    setupButtonText(playText, "PLAY", sf::Vector2f(350, 250));
+    setupButtonText(aboutText, "ABOUT", sf::Vector2f(340, 300));
+    setupButtonText(quitText, "QUIT", sf::Vector2f(350, 350));
 
     aboutPanel.setSize(sf::Vector2f(600, 400));
     aboutPanel.setPosition(100, 100);
@@ -157,11 +122,11 @@ void Game::setupMenu() {
     aboutPanel.setOutlineColor(sf::Color::White);
 
     aboutContentText.setString("BIKE RACER GAME\n\n"
-                            "Avoid obstacles!\n"
-                            "Controls:\n"
-                            "LEFT/RIGHT - Move\n"
-                            "ESC - Pause\n\n"
-                            "Created with SFML");
+                               "Avoid obstacles!\n"
+                               "Controls:\n"
+                               "LEFT/RIGHT - Move\n"
+                               "ESC - Pause\n\n"
+                               "Created with SFML");
     aboutContentText.setFont(font);
     aboutContentText.setCharacterSize(30);
     aboutContentText.setPosition(150, 150);
@@ -180,13 +145,9 @@ void Game::setupMenu() {
     timeText.setFillColor(sf::Color::White);
     timeText.setStyle(sf::Text::Bold);
 
-    difficultyText.setFont(font);
-    difficultyText.setCharacterSize(24);
-    difficultyText.setPosition(20, 60);
-    difficultyText.setFillColor(sf::Color::White);
-}
-
-Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
+    } 
+//************************************************************************************* */
+/*Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
     window.setVerticalSyncEnabled(true);
     window.setFramerateLimit(60);
     
@@ -273,8 +234,54 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
         font = sf::Font();
     }
     setupMenu();
+}  */
+
+
+bool Game::loadTextureWithSimplePlaceholder(sf::Texture& texture, const std::string& filePath,
+    unsigned int placeholderWidth, unsigned int placeholderHeight,
+    const sf::Color& placeholderColor) {
+if (!texture.loadFromFile(filePath)) {
+sf::Image placeholder;
+placeholder.create(placeholderWidth, placeholderHeight, placeholderColor);
+texture.loadFromImage(placeholder);
+return false; 
+}
+return true; 
 }
 
+
+Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
+    window.setVerticalSyncEnabled(true);
+    window.setFramerateLimit(60);
+
+    std::srand(std::time(nullptr));
+
+    // Use the helper function for texture loading
+    loadTextureWithSimplePlaceholder(backgroundTexture, "assets/background.png", 800, 600, sf::Color(135, 206, 235)); // Sky blue fallback
+    loadTextureWithSimplePlaceholder(menuBgTexture, "assets/menu_bg.png", 800, 600, sf::Color(50, 50, 100)); // Dark blue/grey fallback
+
+    loadTextureWithSimplePlaceholder(carTexture, "assets/car.jpg", 100, 60, sf::Color::Blue);
+    loadTextureWithSimplePlaceholder(car2Texture, "assets/car2.png", 100, 60, sf::Color::Red);
+    loadTextureWithSimplePlaceholder(constructionTexture, "assets/construction.png", 100, 100, sf::Color(255, 165, 0)); // Orange fallback
+    loadTextureWithSimplePlaceholder(barrierTexture, "assets/barrier.png", 120, 30, sf::Color::Red);
+    loadTextureWithSimplePlaceholder(parkedBikeTexture, "assets/parked_bike.png", 200, 67, sf::Color::Blue);
+
+
+    background.setTexture(backgroundTexture);
+    menuBackground.setTexture(menuBgTexture);
+
+    loadBikeAnimation(); 
+    initRoad();          
+    resetGame();
+
+    if (!font.loadFromFile("assets/arial.ttf")) {
+        font = sf::Font(); 
+    }
+
+    setupMenu(); 
+
+}
+//***************************************************************************** */
 void Game::run() {
     sf::Clock clock;
     while (window.isOpen()) {
@@ -286,7 +293,7 @@ void Game::run() {
         render();
     }
 }
-
+//******************************************************************************** */
 void Game::handleInput() {
     sf::Event event;
     while (window.pollEvent(event)) {
@@ -350,7 +357,7 @@ void Game::handleInput() {
         bikeCollisionBox.top = bikeY - bikeCollisionBox.height/2;
     }
 }
-
+//******************************************************************************************** */
 void Game::update(float deltaTime) {
     animationTimer += deltaTime;
     while (animationTimer >= frameTime) {
@@ -377,14 +384,9 @@ void Game::update(float deltaTime) {
     if (!obstacles.empty() && obstacles.front()->getY() > 650) {
         obstacles.erase(obstacles.begin());
         addRandomObstacle();
-        
-        elapsedTime = gameClock.getElapsedTime();
-        if (static_cast<int>(elapsedTime.asSeconds()) % difficultyInterval == 0) {
-            increaseDifficulty();
-        }
     }
 }
-
+//********************************************************************************************** */
 void Game::render() {
     window.clear();
 
@@ -405,9 +407,7 @@ void Game::render() {
         seconds %= 60;
         timeText.setString("TIME: " + std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") + std::to_string(seconds));
         window.draw(timeText);
-        
-        difficultyText.setString("SPEED: " + std::to_string(static_cast<int>(roadSpeed * 50)) + "%");
-        window.draw(difficultyText);
+       
 
         if (currentState == PAUSED) {
             window.draw(pauseText);
@@ -448,13 +448,7 @@ void Game::render() {
         window.draw(aboutText);
         window.draw(quitText);
         
-        sf::Text title("BIKE RACER", font, 60);
-        title.setPosition(220, 100);
-        title.setFillColor(sf::Color::White);
-        title.setStyle(sf::Text::Bold);
-        title.setOutlineColor(sf::Color::Black);
-        title.setOutlineThickness(2);
-        window.draw(title);
+      
     }
     else if (currentState == ABOUT) {
         window.draw(menuBackground);

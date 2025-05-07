@@ -22,6 +22,14 @@ private:
     void addRandomObstacle();
     void increaseDifficulty();
     void setupMenu();
+// Helper function for menu ...:
+    void setupButtonBackground(sf::RectangleShape& shape, const sf::Vector2f& position);
+    void setupButtonText(sf::Text& text, const std::string& str, const sf::Vector2f& position);
+
+// helper fun for loadTexture .... : 
+    bool loadTextureWithSimplePlaceholder(sf::Texture& texture, const std::string& filePath,
+        unsigned int placeholderWidth, unsigned int placeholderHeight,
+        const sf::Color& placeholderColor);
 
     sf::RenderWindow window;
     GameState currentState = MENU;
