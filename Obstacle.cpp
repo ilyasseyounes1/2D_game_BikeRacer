@@ -80,12 +80,3 @@ ParkedBikeObstacle::ParkedBikeObstacle(float x, float y, const sf::Texture& text
     setCollisionBox(170, 40);
     sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
 }
-
-PuddleObstacle::PuddleObstacle(float x, float y, const sf::Texture& texture) {
-    sprite.setTexture(texture);
-    sprite.setPosition(x, y);
-    setScale(0.9f);
-    speed = 3.0f;
-    setCollisionBox(70, 20);
-    sprite.setOrigin(texture.getSize().x/2, texture.getSize().y/2);
-}
