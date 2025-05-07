@@ -146,107 +146,19 @@ void Game::setupMenu() {
     timeText.setStyle(sf::Text::Bold);
 
     } 
-//************************************************************************************* */
-/*Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
-    window.setVerticalSyncEnabled(true);
-    window.setFramerateLimit(60);
-    
-    std::srand(std::time(nullptr));
-    
-    if (!backgroundTexture.loadFromFile("assets/background.png")) {
-        sf::Image bgImg;
-        bgImg.create(800, 600, sf::Color(135, 206, 235));
-        backgroundTexture.loadFromImage(bgImg);
-    }
-    
-    if (!menuBgTexture.loadFromFile("assets/menu_bg.png")) {
-        sf::Image menuImg;
-        menuImg.create(800, 600, sf::Color(50, 50, 100));
-        menuBgTexture.loadFromImage(menuImg);
-    }
-    
-    if (!carTexture.loadFromFile("assets/car.jpg")) {
-        sf::Image carImg;
-        carImg.create(100, 60, sf::Color::Transparent);
-        for (int y = 20; y < 40; y++) {
-            for (int x = 10; x < 90; x++) carImg.setPixel(x, y, sf::Color::Blue);
-        }
-        carTexture.loadFromImage(carImg);
-    }
-    
-    if (!car2Texture.loadFromFile("assets/car2.png")) {
-        sf::Image carImg;
-        carImg.create(100, 60, sf::Color::Transparent);
-        for (int y = 20; y < 40; y++) {
-            for (int x = 10; x < 90; x++) carImg.setPixel(x, y, sf::Color::Red);
-        }
-        car2Texture.loadFromImage(carImg);
-    }
-    
-    if (!constructionTexture.loadFromFile("assets/construction.png")) {
-        sf::Image conImg;
-        conImg.create(100, 100, sf::Color::Transparent);
-        for (int y = 0; y < 100; y++) {
-            int width = 50 - y/2;
-            for (int x = 50 - width; x < 50 + width; x++) {
-                if (x >= 0 && x < 100) conImg.setPixel(x, y, sf::Color(255, 165, 0));
-            }
-        }
-        constructionTexture.loadFromImage(conImg);
-    }
-    
-    if (!barrierTexture.loadFromFile("assets/barrier.png")) {
-        sf::Image barImg;
-        barImg.create(120, 30, sf::Color::Transparent);
-        for (int y = 0; y < 30; y++) {
-            for (int x = 0; x < 120; x++) {
-                if ((x + y) % 20 < 10) barImg.setPixel(x, y, sf::Color::Red);
-                else barImg.setPixel(x, y, sf::Color::White);
-            }
-        }
-        barrierTexture.loadFromImage(barImg);
-    }
-    
-    if (!parkedBikeTexture.loadFromFile("assets/parked_bike.png")) {
-        sf::Image bikeImg;
-        bikeImg.create(200, 67, sf::Color::Transparent);
-        for (int y = 20; y < 50; y++) {
-            for (int x = 50; x < 150; x++) bikeImg.setPixel(x, y, sf::Color::Blue);
-        }
-        for (int y = 0; y < 67; y++) {
-            for (int x = 0; x < 200; x++) {
-                if (std::hypot(x-60, y-60) < 15 || std::hypot(x-140, y-60) < 15) {
-                    bikeImg.setPixel(x, y, sf::Color::Black);
-                }
-            }
-        }
-        parkedBikeTexture.loadFromImage(bikeImg);
-    }
 
-    background.setTexture(backgroundTexture);
-    menuBackground.setTexture(menuBgTexture);
-    
-    loadBikeAnimation();
-    initRoad();
-    resetGame();
-
-    if (!font.loadFromFile("assets/arial.ttf")) {
-        font = sf::Font();
+//**************************************************************************** */
+bool Game::loadTextureWithSimplePlaceholder(sf::Texture& texture, 
+                                            const std::string& filePath,
+                                            unsigned int placeholderWidth, unsigned int placeholderHeight,
+                                            const sf::Color& placeholderColor) {
+    if (!texture.loadFromFile(filePath)) {
+        sf::Image placeholder;
+        placeholder.create(placeholderWidth, placeholderHeight, placeholderColor);
+        texture.loadFromImage(placeholder);
+            return false; 
     }
-    setupMenu();
-}  */
-
-
-bool Game::loadTextureWithSimplePlaceholder(sf::Texture& texture, const std::string& filePath,
-    unsigned int placeholderWidth, unsigned int placeholderHeight,
-    const sf::Color& placeholderColor) {
-if (!texture.loadFromFile(filePath)) {
-sf::Image placeholder;
-placeholder.create(placeholderWidth, placeholderHeight, placeholderColor);
-texture.loadFromImage(placeholder);
-return false; 
-}
-return true; 
+    return true; 
 }
 
 
@@ -256,7 +168,6 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
 
     std::srand(std::time(nullptr));
 
-    // Use the helper function for texture loading
     loadTextureWithSimplePlaceholder(backgroundTexture, "assets/background.png", 800, 600, sf::Color(135, 206, 235)); // Sky blue fallback
     loadTextureWithSimplePlaceholder(menuBgTexture, "assets/menu_bg.png", 800, 600, sf::Color(50, 50, 100)); // Dark blue/grey fallback
 
@@ -265,7 +176,6 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
     loadTextureWithSimplePlaceholder(constructionTexture, "assets/construction.png", 100, 100, sf::Color(255, 165, 0)); // Orange fallback
     loadTextureWithSimplePlaceholder(barrierTexture, "assets/barrier.png", 120, 30, sf::Color::Red);
     loadTextureWithSimplePlaceholder(parkedBikeTexture, "assets/parked_bike.png", 200, 67, sf::Color::Blue);
-
 
     background.setTexture(backgroundTexture);
     menuBackground.setTexture(menuBgTexture);
@@ -277,9 +187,7 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
     if (!font.loadFromFile("assets/arial.ttf")) {
         font = sf::Font(); 
     }
-
     setupMenu(); 
-
 }
 //***************************************************************************** */
 void Game::run() {
@@ -419,30 +327,30 @@ void Game::render() {
         window.draw(aboutButtonBg);
         window.draw(quitButtonBg);
         
-        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-        if (playText.getGlobalBounds().contains(mousePos)) {
-            playButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
-            playText.setFillColor(sf::Color(200, 255, 200));
-        } else {
-            playButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-            playText.setFillColor(sf::Color::White);
-        }
+        // sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+        // if (playText.getGlobalBounds().contains(mousePos)) {
+        //     playButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
+        //     playText.setFillColor(sf::Color(200, 255, 200));
+        // } else {
+        //     playButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
+        //     playText.setFillColor(sf::Color::White);
+        // }
         
-        if (aboutText.getGlobalBounds().contains(mousePos)) {
-            aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
-            aboutText.setFillColor(sf::Color(200, 200, 255));
-        } else {
-            aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-            aboutText.setFillColor(sf::Color::White);
-        }
+        // if (aboutText.getGlobalBounds().contains(mousePos)) {
+        //     aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
+        //     aboutText.setFillColor(sf::Color(200, 200, 255));
+        // } else {
+        //     aboutButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
+        //     aboutText.setFillColor(sf::Color::White);
+        // }
         
-        if (quitText.getGlobalBounds().contains(mousePos)) {
-            quitButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
-            quitText.setFillColor(sf::Color(255, 200, 200));
-        } else {
-            quitButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
-            quitText.setFillColor(sf::Color::White);
-        }
+        // if (quitText.getGlobalBounds().contains(mousePos)) {
+        //     quitButtonBg.setFillColor(sf::Color(0, 0, 0, 150));
+        //     quitText.setFillColor(sf::Color(255, 200, 200));
+        // } else {
+        //     quitButtonBg.setFillColor(sf::Color(0, 0, 0, 200));
+        //     quitText.setFillColor(sf::Color::White);
+        // }
         
         window.draw(playText);
         window.draw(aboutText);
