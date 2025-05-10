@@ -8,7 +8,6 @@ void Game::loadBikeAnimation() {
     bool loadedFromFile = bikeSheet.loadFromFile("assets/bike_sheet.png");
 
     if (!loadedFromFile) {
-        // If loading fails, create a simple placeholder image
         int frameWidth = 48;
         int frameHeight = 84;
         sf::Image placeholder;
@@ -126,7 +125,8 @@ void Game::setupMenu() {
                                "Controls:\n"
                                "LEFT/RIGHT - Move\n"
                                "ESC - Pause\n\n"
-                               "Created with SFML");
+                               "Created with SFML\n"
+                               "By: Ilyasse younes & Abdelhay Zaadaddi");
     aboutContentText.setFont(font);
     aboutContentText.setCharacterSize(30);
     aboutContentText.setPosition(150, 150);
@@ -147,7 +147,7 @@ void Game::setupMenu() {
 
     } 
 
-//**************************************************************************** */
+//************************************************************************************************* */
 bool Game::loadTextureWithSimplePlaceholder(sf::Texture& texture, 
                                             const std::string& filePath,
                                             unsigned int placeholderWidth, unsigned int placeholderHeight,
@@ -168,12 +168,12 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
 
     std::srand(std::time(nullptr));
 
-    loadTextureWithSimplePlaceholder(backgroundTexture, "assets/background.png", 800, 600, sf::Color(135, 206, 235)); // Sky blue fallback
-    loadTextureWithSimplePlaceholder(menuBgTexture, "assets/menu_bg.png", 800, 600, sf::Color(50, 50, 100)); // Dark blue/grey fallback
+    loadTextureWithSimplePlaceholder(backgroundTexture, "assets/background.png", 800, 600, sf::Color(135, 206, 235));
+    loadTextureWithSimplePlaceholder(menuBgTexture, "assets/menu_bg.png", 800, 600, sf::Color(50, 50, 100)); 
 
     loadTextureWithSimplePlaceholder(carTexture, "assets/car.jpg", 100, 60, sf::Color::Blue);
     loadTextureWithSimplePlaceholder(car2Texture, "assets/car2.png", 100, 60, sf::Color::Red);
-    loadTextureWithSimplePlaceholder(constructionTexture, "assets/construction.png", 100, 100, sf::Color(255, 165, 0)); // Orange fallback
+    loadTextureWithSimplePlaceholder(constructionTexture, "assets/construction.png", 100, 100, sf::Color(255, 165, 0)); 
     loadTextureWithSimplePlaceholder(barrierTexture, "assets/barrier.png", 120, 30, sf::Color::Red);
     loadTextureWithSimplePlaceholder(parkedBikeTexture, "assets/parked_bike.png", 200, 67, sf::Color::Blue);
 
