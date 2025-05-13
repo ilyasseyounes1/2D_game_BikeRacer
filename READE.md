@@ -6,8 +6,8 @@ A fast-paced obstacle dodging game built with SFML (C++). Navigate through traff
 ## ✨ Features
 - **Smooth bike physics** with leaning animations
 - **5+ obstacle types** (cars, barriers, puddles, etc.)
-- **Progressive difficulty** - gets faster as you play
-- **Boost mechanic** for temporary speed bursts
+- **Progressive difficulty** - gets faster as you play   // removed
+- **Boost mechanic** for temporary speed bursts   //removed
 - **Crisp pixel art** animations
 - **Responsive controls** (keyboard/mouse)
 
@@ -23,5 +23,7 @@ A fast-paced obstacle dodging game built with SFML (C++). Navigate through traff
    mkdir build && cd build
    cmake ..
    make
+
+   
    g++ main.cpp -o BikeRace -lsfml-graphics -lsfml-window -lsfml-systemC
    ./BikeRace

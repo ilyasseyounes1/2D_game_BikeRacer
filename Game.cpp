@@ -54,6 +54,7 @@ void Game::initRoad() {
     }
 }
 //*********************************************************************** */
+//start 3 --->
 void Game::resetGame() {
     bike.setPosition(400, 440);
     bikeY = 440.0f;
@@ -126,7 +127,7 @@ void Game::setupMenu() {
                                "LEFT/RIGHT - Move\n"
                                "ESC - Pause\n\n"
                                "Created with SFML\n"
-                               "By: Ilyasse younes & Abdelhay Zaadaddi");
+                               "By:Ilyasse younes & Abdelhay Zaadaddi");
     aboutContentText.setFont(font);
     aboutContentText.setCharacterSize(30);
     aboutContentText.setPosition(150, 150);
@@ -190,11 +191,12 @@ Game::Game() : window(sf::VideoMode(800, 600), "Bike Race") {
     setupMenu(); 
 }
 //***************************************************************************** */
+// start 1 --->
 void Game::run() {
     sf::Clock clock;
     while (window.isOpen()) {
         float deltaTime = clock.restart().asSeconds();
-        handleInput();
+        handleInput(); // -----> input detection :
         if (currentState == PLAYING) {
             update(deltaTime);
         }
@@ -202,6 +204,7 @@ void Game::run() {
     }
 }
 //******************************************************************************** */
+/// Start 2 ---->
 void Game::handleInput() {
     sf::Event event;
     while (window.pollEvent(event)) {
@@ -266,6 +269,7 @@ void Game::handleInput() {
     }
 }
 //******************************************************************************************** */
+//start 3 : ---> 
 void Game::update(float deltaTime) {
     animationTimer += deltaTime;
     while (animationTimer >= frameTime) {
